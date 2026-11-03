@@ -136,7 +136,7 @@ def save_json_atomically(path: Path, data, keep_backup=True):
     backup = path.with_suffix(path.suffix + ".bak")
     try:
         encoded = json.dumps(data, ensure_ascii=False, indent=2)
-        with temporary.open("w", encoding="utf-8", newline="\\n") as stream:
+        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
             stream.write(encoded)
             stream.flush()
             os.fsync(stream.fileno())
