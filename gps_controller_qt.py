@@ -128,6 +128,37 @@ THEME_FILE = APP_DATA_DIR / "gps_theme.json"
 CONFIG_FILE = APP_DATA_DIR / "gps_config.json"
 
 
+def save_json_atomically(path: Path, data, keep_backup=True):
+    """Write JSON via os.replace and preserve the last valid file as .bak."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    backup = path.with_suffix(path.suffix + ".bak")
+    try:
+        encoded = json.dumps(data, ensure_ascii=False, indent=2)
+        with temporary.open("w", encoding="utf-8", newline="\\n") as stream:
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+
+        if keep_backup and path.exists():
+            try:
+                # Never replace a good backup with an already-corrupt primary.
+                json.loads(path.read_text(encoding="utf-8"))
+                backup_temp = backup.with_name(backup.name + ".tmp")
+                backup_temp.write_bytes(path.read_bytes())
+                os.replace(backup_temp, backup)
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                pass
+
+        os.replace(temporary, path)
+    finally:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
 def resource_path(relative_path: str) -> Path:
     """Resolve bundled assets in source, one-folder, and one-file builds."""
     bundle_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
@@ -400,7 +431,7 @@ class MumuBackend:
             # Keep the old key for downgrade compatibility; it points to the first configured instance.
             "instance_index": indices[0],
         }
-        self.config_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        save_json_atomically(self.config_file, payload)
         self.config = payload
 
     def configured_indices(self) -> list[str]:
@@ -567,7 +598,10 @@ class GPSWindow(QMainWindow):
         # Single-value manual GPS cache and editable Route Walk draft.
         # These are separate from the append-only location/route history.
         self.last_manual_location = None
+        self.manual_input_cache = {"lat": "", "lon": ""}
         self.route_draft = None
+        self._data_recovered = False
+        self._data_load_error = None
         self._restoring_route_draft = False
         self.history_lock = threading.Lock()
         self.selected_bookmark = None
@@ -589,6 +623,10 @@ class GPSWindow(QMainWindow):
         self._refresh_bookmarks()
         self._refresh_location_history()
         self._set_status(self._status_source_text, MUTED)
+        if self._data_recovered:
+            self._set_status("已从备份恢复定位数据。", ORANGE)
+        elif self._data_load_error:
+            QMessageBox.warning(self, self._t("数据读取警告"), self._t("定位数据文件无法读取，已保留原文件且使用空白数据启动。请检查文件及其 .bak 备份。\n") + str(self._data_load_error))
 
     # ---- language -----------------------------------------------------
     def _to_traditional(self, text: str) -> str:
@@ -627,7 +665,7 @@ class GPSWindow(QMainWindow):
         return THEMES["蓝色"].copy()
 
     def _save_theme(self):
-        THEME_FILE.write_text(json.dumps(self.theme, ensure_ascii=False, indent=2), encoding="utf-8")
+        save_json_atomically(THEME_FILE, self.theme)
 
     @staticmethod
     def _set_theme_globals(theme):
@@ -1099,12 +1137,13 @@ class GPSWindow(QMainWindow):
 
         coords = self._section(self.gps_layout, "手动坐标")
         coords.addWidget(self._label("纬度 Latitude", 10, MUTED))
-        last_lat, last_lon = self.last_manual_location or (None, None)
-        self.lat_entry = self._entry(value="" if last_lat is None else str(last_lat))
+        self.lat_entry = self._entry(value=self.manual_input_cache.get("lat", ""))
         coords.addWidget(self.lat_entry)
         coords.addWidget(self._label("经度 Longitude", 10, MUTED))
-        self.lon_entry = self._entry(value="" if last_lon is None else str(last_lon))
+        self.lon_entry = self._entry(value=self.manual_input_cache.get("lon", ""))
         coords.addWidget(self.lon_entry)
+        self.lat_entry.textChanged.connect(self._save_manual_inputs)
+        self.lon_entry.textChanged.connect(self._save_manual_inputs)
 
         walk = self._section(self.gps_layout, "传送后原地随机走动", "可选功能：在目标附近移动一段时间，然后返回起点。")
         random_toggle = QHBoxLayout()
@@ -1359,15 +1398,25 @@ class GPSWindow(QMainWindow):
         manual = None
         if self.last_manual_location is not None:
             manual = {"lat": self.last_manual_location[0], "lon": self.last_manual_location[1]}
+        manual_inputs = getattr(self, "manual_input_cache", {"lat": "", "lon": ""}).copy()
+        if hasattr(self, "lat_entry") and hasattr(self, "lon_entry"):
+            manual_inputs = {"lat": self.lat_entry.text(), "lon": self.lon_entry.text()}
+            self.manual_input_cache = manual_inputs.copy()
         data = {
-            "version": 3,
+            "version": 4,
             "bookmarks": self.bookmarks,
             "history": self.location_history[-100:],
             "route_history": self.route_history[-30:],
             "last_manual_location": manual,
+            "manual_input": manual_inputs,
             "route_draft": {"stop_count": len(route_stops), "stops": route_stops},
         }
-        DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        save_json_atomically(DATA_FILE, data)
+
+    def _save_manual_inputs(self, *_args):
+        """Persist the visible coordinate fields, including incomplete drafts."""
+        self.manual_input_cache = {"lat": self.lat_entry.text(), "lon": self.lon_entry.text()}
+        self._save_bookmarks()
 
     def _save_route_draft(self, *_args):
         if self._restoring_route_draft:
