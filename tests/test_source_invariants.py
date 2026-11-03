@@ -56,7 +56,7 @@ class SourceInvariantTests(unittest.TestCase):
 
     def test_first_run_route_has_two_empty_rows(self):
         route_tab = ast.unparse(find_method(find_class("GPSWindow"), "_build_route_tab"))
-        self.assertIn('["", ""]', route_tab)
+        self.assertIn("else ['', '']", route_tab)
         self.assertNotIn("35.6812,139.7671", route_tab)
 
     def test_route_history_does_not_mark_all_stops_as_visited(self):
@@ -68,7 +68,7 @@ class SourceInvariantTests(unittest.TestCase):
         self.assertIn("record_route = Signal(object)", ast.unparse(worker))
         launch = ast.unparse(find_method(find_class("GPSWindow"), "_launch_route"))
         self.assertIn("worker.record_route.emit(points)", launch)
-        self.assertIn('worker.record_location.emit(end[0], end[1], "路线行走")', launch)
+        self.assertIn("worker.record_location.emit(end[0], end[1], '路线行走')", launch)
 
     def test_shutdown_waits_for_threads_asynchronously(self):
         gps_window = find_class("GPSWindow")
