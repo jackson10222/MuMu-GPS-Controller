@@ -33,8 +33,8 @@
 ### 3. 🏷️ 创建 Release
 
 1. 打开 Repository 的 **Releases** 页面。
-2. 点击 **Draft a new release**。
-3. 由于 `v1.0.0` Release 已存在，请更新现有 Release，不要创建重复 Tag。
+2. 找到现有的 **MuMu GPS Controller v1.0.0**，点击 **Edit release**。
+3. 保持 Tag 为 `v1.0.0`，不要创建新 Tag。
 4. Release title：`MuMu GPS Controller v1.0.0`。
 5. 将 `dist/installer/MuMu-GPS-Controller-Setup.exe` 拖到附件区域。
 6. 从 `docs/RELEASE_NOTES_v1.0.0.md` 复制中英文发布说明。
@@ -79,8 +79,8 @@ Upload source code, documentation, assets, and build scripts, including the Pyth
 ### 3. 🏷️ Create a Release
 
 1. Open the repository's **Releases** page.
-2. Select **Draft a new release**.
-3. The `v1.0.0` Release already exists. Update the existing Release; do not create a duplicate tag.
+2. Find the existing **MuMu GPS Controller v1.0.0** release and select **Edit release**.
+3. Keep the existing `v1.0.0` tag; do not create a new tag.
 4. Attach `dist/installer/MuMu-GPS-Controller-Setup.exe`.
 5. Copy the bilingual notes from `docs/RELEASE_NOTES_v1.0.0.md`.
 6. Publish the release.
