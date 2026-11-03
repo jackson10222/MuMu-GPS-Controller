@@ -1,259 +1,160 @@
-# MuMu GPS Controller
+# 📍 MuMu GPS Controller
 
-A desktop GPS controller for MuMu Android emulators. It provides manual GPS
-teleportation, optional local random walking, saved locations, route walking,
-location history, Simplified Chinese / Traditional Chinese / English UI, and
-customizable colour themes.
+[简体中文说明](README.zh-CN.md) · **English**
 
-The interface is implemented with PySide6 and keeps emulator configuration
-separate from personal saved locations and theme preferences. The supplied
-blue location-pin artwork is used as the application window icon and as the
-Windows executable icon when rebuilt with the included build script.
+A Windows desktop application for controlling GPS locations on **MuMu Player 6 and MuMu Player 12**. It supports manual teleportation, random walking, multi-stop route walking, saved locations, location history, and simultaneous control of multiple emulator instances.
 
-## Features
+> ⚠️ **Important:** This is a community project, not an official MuMu / NetEase product. MuMu Player must be installed separately. Compatibility depends on the installed MuMu version, `MuMuManager.exe`, and the third-party MuMu Python API.
 
-- Teleport to a latitude/longitude pair or a Google Maps link.
-- Optional nearby random walk after teleport, with configurable duration and
-  radius.
-- Multi-stop route walking with progress, pause/resume, speed, and update
-  interval controls.
-- Saved locations, favourites, location history, and route history.
-- Duplicate-location confirmation: when a coordinate already exists in location history, the app shows its last recorded time and elapsed time before sending it again.
-- Simplified Chinese, Traditional Chinese, and English UI.
-- Built-in colour templates plus custom background, card, and accent colours.
-- Automatic, limited-scope discovery of `MuMuManager.exe`; no full-disk scan.
-- Persistent MuMuManager path and configurable multi-instance control with concurrent GPS updates.
-- A test action that verifies API configuration and instance selection without
-  claiming the emulator is running.
+---
 
-## Supported MuMu versions
+## ✨ Features
 
-The application searches the standard manager locations for both **MuMu Player
-12** and **MuMu Player 6**, including 64-bit and `Program Files (x86)` paths.
-It also checks a small set of common Netease/Global installation layouts. A
-manual selection is always available in Settings.
+- 📍 **Manual GPS teleport** — enter latitude/longitude, paste a Google Maps link, or parse a coordinate pair.
+- 🖥️ **Multi-instance control** — configure multiple MuMu instance indexes and send GPS updates to all configured instances.
+- 🚶 **Random walking** — optionally move around the starting point within a configured radius and duration.
+- 🗺️ **Route walking** — add multiple stops, interpolate movement between them, monitor progress, pause/resume, and stop.
+- ⭐ **Saved locations** — save, organize, and quickly reuse favourite places.
+- 🕘 **Location and route history** — keep a record of previous location and route operations.
+- 🔁 **Duplicate-location confirmation** — before manually sending a coordinate already in location history, see its last recorded time and confirm.
+- 🌐 **Three UI languages** — Simplified Chinese, Traditional Chinese, and English.
+- 🎨 **Themes** — choose a built-in colour theme or customize interface colours.
+- 🔎 **Manager-path discovery** — check common MuMu installation folders without scanning the entire disk; manual browsing is available.
+- 🪟 **Windows integration** — application/taskbar icon, installer, Start Menu shortcut, optional Desktop shortcut, and uninstaller.
+- 🫥 **Reduced console flashing** — apply a scoped Windows no-console launch patch to the MuMu API command runner when supported by the installed API layout.
 
-The underlying API is
-[`mumu-python-api-wlkjyy`](https://github.com/u-wlkjyy/mumu-python-api). Its
-documentation describes `Mumu(path).select(index)` and specifies that the
-index is the MuMu Multi-instance Manager number. Actual Player 6 and Player 12
-runtime testing still depends on an installed emulator and is not implied by
-path detection alone.
+## 🧩 Supported environment
 
-## Requirements
+- Windows 10 or Windows 11 (64-bit).
+- MuMu Player 6 or MuMu Player 12.
+- A valid `MuMuManager.exe` from the installed MuMu Player package.
+- For running from source: Python compatible with the pinned PySide6 release in `requirements.txt`.
+- For building Windows executables: PyInstaller (installed automatically by the supplied `.bat` scripts).
+- For building the installer: Inno Setup 6.
 
-- Windows
-- Python 3.10 or later
-- MuMu Player 6 or MuMu Player 12
-- `MuMuManager.exe` from that installation
-- The dependencies in `requirements.txt`
-- PyInstaller (only if building the EXE yourself)
+The project has been built in a Windows environment with PySide6 6.12.0. Runtime compatibility should be verified with the user's installed MuMu version and emulator instances. End users do **not** need Python when using a packaged build.
 
-## Installation
+## 📥 Download and install
+
+For normal users, download the latest **`MuMu-GPS-Controller-Setup.exe`** from [GitHub Releases](https://github.com/jackson10222/MuMu-GPS-Controller/releases/latest).
+
+1. Run `MuMu-GPS-Controller-Setup.exe`.
+2. Choose the installation directory.
+3. Choose whether to create a Desktop shortcut. A Start Menu shortcut is also created.
+4. Finish setup and launch the application from the Desktop or Start Menu.
+5. Open **Settings** and configure the MuMu manager path and emulator instance indexes.
+
+MuMu Player itself is not included in this installer and must be installed separately.
+
+## ⚙️ Configure MuMu Player
+
+1. Start MuMu Player and open its Multi-instance Manager.
+2. In the application, open **Settings → Emulator Settings**.
+3. Check the detected **MuMuManager Path**. If it is incorrect or empty, click **Browse…** and select `MuMuManager.exe`.
+4. Add the instance indexes you want to control. An index is the number shown by MuMu's Multi-instance Manager; it is not an automatic list of currently running emulators.
+5. Click **Save Emulator Settings**.
+6. Use **Test Connection** to check that the API can select the configured indexes. This test does not prove that every emulator is currently running.
+
+You can add or remove indexes in Settings. For example, configure `1`, `2`, `3`, and `4` to control those four instances together. All configured indexes receive the same GPS update. If an update fails, the application attempts per-index diagnostics and reports which indexes succeeded or failed.
+
+## 🧭 Use GPS features
+
+### 📍 Manual GPS teleport
+
+1. Open **GPS Location**.
+2. Enter latitude and longitude, paste a Google Maps link, or parse a `latitude,longitude` pair.
+3. Optionally enable Random Walk and configure its duration and radius.
+4. Click **Set Virtual Location**.
+
+The MuMu API call uses `androidEvent.location(longitude, latitude)`. **Longitude is the first argument; latitude is the second.**
+
+If the same coordinate is already recorded in location history, the app asks whether you want to send it again and displays the previous record time.
+
+### 🚶 Random Walk
+
+Enable Random Walk on the GPS Location page before teleporting. The app moves around the starting point within the configured radius for the selected duration. When it finishes normally, it sends the location back to the starting point. Stopping the task keeps the last position.
+
+### 🗺️ Route Walk
+
+1. Open **Route Walk**.
+2. Enter a coordinate pair or Google Maps link for each stop. At least two valid stops are required.
+3. Set the movement speed and update interval.
+4. Start the route. Use **Pause / Resume** or **Stop** as needed.
+
+Route movement is interpolated between the supplied points. It is not a road-navigation service and does not follow real streets.
+
+## 🔒 Data and privacy
+
+The application stores configuration and user data separately from the installation directory. For packaged builds, the normal data directory is:
+
+```text
+%LOCALAPPDATA%\\MuMu GPS Controller\\
+```
+
+Files may include:
+
+- `gps_config.json` — MuMuManager path and emulator instance indexes.
+- `gps_locations.json` — saved locations, location history, route history, and input caches.
+- `gps_theme.json` — theme preferences.
+
+When running the source code directly, data files are stored beside the Python script. The installer does not intentionally delete the user data directory during uninstall, so preferences can remain available if the app is installed again.
+
+🚫 **Do not commit these JSON files to GitHub.** They can contain personal locations and machine-specific paths. The included `.gitignore` excludes them.
+
+## 🧑‍💻 Run from source
 
 ```powershell
-git clone https://github.com/YOUR-ACCOUNT/MuMu-GPS-Controller.git
+git clone https://github.com/jackson10222/MuMu-GPS-Controller.git
 cd MuMu-GPS-Controller
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-If PowerShell blocks activation, run the command in Command Prompt instead:
-
-```bat
-.venv\Scripts\activate.bat
-```
-
-## Run
-
-```powershell
 python gps_controller_qt.py
 ```
 
-## Configure MuMuManager.exe
+If PowerShell blocks virtual-environment activation, use Command Prompt:
 
-1. Open **Settings** from the application header.
-2. In **Emulator Settings**, check the displayed **MuMuManager Path**. On the
-   first launch, the app will have checked only the usual MuMu installation
-   folders.
-3. If no path was found, click **Browse…** and select `MuMuManager.exe`.
-4. In the instance list, keep the emulator indexes you want to control. Use
-   **Add Instance** to add more indexes and the row's **Delete** button to remove
-   one. For example, enter `1`, `2`, `3`, and `4` to control four emulator
-   instances together.
-5. Click **Save Emulator Settings**. Use **Test Connection** to check that
-   each configured index can be selected by the API.
+```bat
+.venv\\Scripts\\activate.bat
+```
 
-When the source is run directly, the manager path and configured instance
-index list are stored in `gps_config.json` beside the script. The packaged EXE
-stores that file in
-`%LOCALAPPDATA%\MuMu GPS Controller` so data survives PyInstaller's temporary
-single-file extraction. Saved locations and colour themes are kept in their own
-files and are also ignored by Git.
+## 🛠️ Build for Windows
 
-## Select multiple emulator instances
+Run the scripts from the project root on a 64-bit Windows build computer. Each script installs the Python requirements and PyInstaller before building.
 
-The default configuration contains instance `0`. In Settings, use **Add
-Instance** to configure more indexes. For example, add `1`, `2`, `3`, and `4`
-to send the same GPS coordinate to all four instances concurrently. The index
-is the number shown by MuMu's Multi-instance Manager; it is not an automatic
-lookup of running emulators. The manager executable path is shared by all
-configured indexes.
+| Script | Output | What to distribute |
+| --- | --- | --- |
+| `build_portable.bat` | `dist\\MuMu-GPS-Controller-Portable\\` | Distribute the **entire folder**, not just the EXE. |
+| `build_windows.bat` | `dist\\MuMu-GPS-Controller.exe` | Distribute the single EXE. |
+| `build_installer.bat` | `dist\\installer\\MuMu-GPS-Controller-Setup.exe` | Requires Inno Setup 6; creates a normal Windows installer. |
 
-Manual teleport, the optional random walk, and every Route Walk GPS update are
-broadcast to all configured instances. Each instance receives the same
-latitude/longitude update in parallel. The application creates a fresh `Mumu`
-API object and calls `select(index)` inside each worker thread; no selected API
-object is shared between threads. If any configured instance fails an update,
-the task reports the successful and failed indexes rather than silently
-ignoring a partial failure.
+The installer lets users select the destination folder, creates a Start Menu shortcut, offers an optional Desktop shortcut, registers an uninstall entry, and can launch the app after setup. The installation recipe is `MuMu-GPS-Controller-Setup.iss`.
 
-## GPS teleport
+The Chinese installer message files are bundled in `Languages/`; the build does not depend on Chinese language files being installed in the Inno Setup program directory. Some untranslated installer messages fall back to English.
 
-1. Open **GPS Location**.
-2. Paste a Google Maps share URL, or type `latitude,longitude` and select
-   **Parse Link / Coordinates**. You can also enter the fields manually.
-3. Optionally enable random walking and choose its duration and radius.
-4. Click **Set Virtual Location**.
+## 🧯 Troubleshooting
 
-The controller calls the MuMu API as
-`androidEvent.location(longitude, latitude)`. The parameter order is
-intentional: longitude comes first.
-
-## Route walking
-
-1. Open **Route Walk**.
-2. Enter one coordinate pair or Google Maps link per route stop. At least two
-   stops are required.
-3. Validate the stops, select a speed and update interval, then start the
-   route.
-4. Pause/resume or stop the route with the existing controls.
-
-
-## Windows console-window behavior
-
-The application patches the MuMu API command runner in `mumu.utils` to pass
-Windows `CREATE_NO_WINDOW` / `STARTF_USESHOWWINDOW` flags when it launches
-`MuMuManager.exe`. This prevents a CMD window from flashing for every GPS
-update. The patch is scoped to the MuMu API module and does not modify Python's
-global `subprocess` module.
-
-## Troubleshooting
-
-| Problem | What to check |
+| Issue | Suggested check |
 | --- | --- |
-| `MuMuManager.exe` was not found | Select it manually in Settings. The selected filename must be exactly `MuMuManager.exe`. |
-| The API is not installed | Activate the project environment and run `python -m pip install -r requirements.txt`. |
-| Test Connection fails on an instance | Verify the Multi-instance Manager number and the manager path. The test confirms API setup and `select(index)` only; it does not confirm the emulator process is currently running. |
-| GPS request fails | Start the intended emulator instance, re-check its index, and inspect MuMu/API permissions or error output. |
-| Language or theme changes are not retained | Check that the project folder is writable; theme and emulator configuration are stored separately. |
+| `MuMuManager.exe` is not found | Open Settings and browse to the actual `MuMuManager.exe` file. |
+| Test Connection fails for an index | Check the index shown in MuMu Multi-instance Manager and verify the manager path. Start the intended emulator instance. |
+| One or more instances fail GPS updates | Check each reported index. Successful API selection does not guarantee that the emulator is running or accepting location updates. |
+| GPS does not move | Confirm MuMu Player is running, the selected instance is correct, and the MuMu API can communicate with the manager. |
+| A CMD window flashes | The app applies a scoped no-console patch to the MuMu API command runner. If it still flashes, report the MuMu Player version, API version, and steps that trigger it. |
+| The application does not start | Run the packaged app from its complete Portable folder, or reinstall using the Setup program. Do not copy only the Portable EXE away from its `_internal` folder. |
 
-## Privacy and repository hygiene
+## 📚 Documentation
 
-Do not commit `gps_config.json`, `gps_locations.json`, or `gps_theme.json`.
-They can contain machine-specific paths and personal locations. The included
-`.gitignore` excludes them by default.
+- [🛠️ Windows build guide](docs/BUILDING.md)
+- [🚀 GitHub publishing guide](docs/GITHUB_PUBLISHING.md)
+- [📝 v1.0.0 release notes](docs/RELEASE_NOTES_v1.0.0.md)
+- [🇨🇳 完整简体中文说明](README.zh-CN.md)
 
-## License
+## 🧾 Third-party components
 
-Released under the [MIT License](LICENSE).
+This project uses PySide6, Requests, OpenCC, and `mumu-python-api-wlkjyy` (plus their dependencies). Each third-party component remains under its own license. See the corresponding project/package pages for details.
 
-## Build a Windows EXE
+## 📄 License
 
-The project includes the supplied location-pin icon in both PNG and Windows
-ICO formats. To rebuild a one-file Windows executable with the icon embedded,
-run `build_windows.bat` from the project directory. The script installs the
-project dependencies and PyInstaller, then writes
-`dist\MuMu-GPS-Controller.exe`. The PNG is bundled as a Qt runtime asset so
-the title bar and taskbar use the same icon.
-
-## CMD window behavior
-
-The MuMu API launches `MuMuManager.exe` through `subprocess.run()` when it
-changes the emulator location. On Windows, this project applies a narrowly
-scoped subprocess wrapper to the API utility module, adding
-`CREATE_NO_WINDOW` and hidden startup flags. This is intended to prevent a
-console window from flashing for each GPS update, without changing the
-process-wide Python `subprocess` module or modifying the third-party package.
-
-## Build Windows executables
-
-Use 64-bit Windows and a Python version supported by the selected PySide6 release. This project pins PySide6 6.12.0, which has been used in the current development environment.
-
-- Run `build_portable.bat` to create `dist\MuMu-GPS-Controller-Portable\`. Distribute the entire folder.
-- Run `build_windows.bat` to create `dist\MuMu-GPS-Controller.exe` as a single-file executable.
-
-Both scripts install the dependencies from `requirements.txt` and PyInstaller before building. Test the resulting build on a clean Windows account or PC before publishing. The app still requires MuMu Player and its `MuMuManager.exe`; Python does not need to be installed on the end user's PC.
-
-### Saved input cache
-
-The app stores the last submitted manual GPS coordinate pair and the current Route Walk draft in `gps_locations.json`. The manual coordinate cache is a single replaceable value (not an accumulating list). The route draft stores each stop input, including blank rows, and its row count; adding, removing, or editing stops updates the saved draft. Existing bookmarks, location history, and completed route history remain separate.
-Example cache fields in `gps_locations.json`:
-
-```json
-{
-  "last_manual_location": {"lat": 4.0, "lon": 4.0},
-  "route_draft": {
-    "stop_count": 3,
-    "stops": ["4,4", "4.001,4.001", ""]
-  }
-}
-```
-
-## Multi-instance GPS control
-
-The Emulator Settings screen lets you add, remove, and save multiple MuMu instance indexes. For example, configure `1`, `2`, `3`, and `4` to send every GPS update to all four instances concurrently. Each update creates a fresh MuMu API client per instance in its own worker thread. The same fan-out is used by manual teleport, optional random walk, and Route Walk. The MuMuManager executable path is shared by the configured instances.
-
-The settings JSON stores `instance_indices` as a list. Existing configurations that only contain `instance_index` are migrated automatically to a one-item list. Duplicate indexes are rejected.
-
-
-### Multi-instance GPS updates
-
-The app uses the MuMu API native multi-index selection (`select([index1, index2, ...])`) for one GPS update. If the batch call fails, it retries each configured index sequentially to identify unavailable instances and reports per-index errors.
-
-## Install like a regular Windows application
-
-To create a Windows setup program, first install **Inno Setup 6** on the build
-computer: https://jrsoftware.org/isinfo.php. Then run `build_installer.bat`
-from the project folder. The script builds the current one-folder PyInstaller
-application and compiles `MuMu-GPS-Controller-Setup.iss`.
-
-The resulting installer is:
-
-```text
-dist\installer\MuMu-GPS-Controller-Setup.exe
-```
-
-During setup, users can choose the destination folder. The installer creates
-a Start Menu shortcut and offers an optional Desktop shortcut (selected by
-default). It also registers a normal Windows uninstall entry and can launch
-the application when setup finishes. The installed application does not need
-Python on the target computer; the user does still need MuMu Player 6 or 12
-for emulator GPS control.
-
-Application settings, saved locations, themes, and emulator configuration are
-stored under `%LOCALAPPDATA%\MuMu GPS Controller`, separately from the
-installation folder. The installer intentionally does not remove this user
-data when the application is uninstalled, so it is available if the app is
-installed again for the same Windows account.
-
-The installer itself is compiled on Windows by Inno Setup 6. This repository
-contains its `.iss` recipe and build script, not a precompiled installer.
-
-## Build the Windows installer
-
-1. Install Inno Setup 6.
-2. Run `build_installer.bat` from this project folder.
-3. The script builds the application with PyInstaller and compiles the setup
-   program into `dist\installer\MuMu-GPS-Controller-Setup.exe`.
-
-The installer language overrides are bundled in `Languages/`, so the build
-**does not depend on Chinese language files being installed in the Inno Setup
-program directory**. Inno Setup's built-in `Default.isl` is loaded first, and
-project-local Simplified/Traditional Chinese overrides are layered on top.
-
-The bundled Chinese translations are partial message overrides; any untranslated
-installer messages fall back to English. The application UI itself remains
-fully multilingual as before.
+The project source code is released under the [MIT License](LICENSE). Third-party libraries and assets are not relicensed by this statement.
