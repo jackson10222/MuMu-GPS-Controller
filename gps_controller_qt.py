@@ -1340,7 +1340,8 @@ class GPSWindow(QMainWindow):
 
     # ---- saved data ---------------------------------------------------
     def _load_bookmarks(self):
-        if not DATA_FILE.exists():
+        backup_file = DATA_FILE.with_suffix(DATA_FILE.suffix + ".bak")
+        if not DATA_FILE.exists() and not backup_file.exists():
             return
         try:
             try:
