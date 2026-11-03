@@ -118,8 +118,9 @@ MuMu API 的调用顺序是 `androidEvent.location(longitude, latitude)`。**第
 - `gps_config.json`：MuMuManager 路径和模拟器实例编号。
 - `gps_locations.json`：收藏地点、定位历史、路线历史、最近一次成功设置的手动坐标，以及 Route Walk 输入草稿。
 
-首次启动且没有已保存输入时，手动 Latitude／Longitude 为空白，Route Walk 默认显示两个空白 Stop。输入坐标或修改 Stops 后，程序会保存最新内容，并在下次启动时恢复。
 - `gps_theme.json`：主题偏好设置。
+
+首次启动且没有已保存输入时，手动 Latitude／Longitude 为空白，Route Walk 默认显示两个空白 Stop。输入坐标或修改 Stops 后，程序会保存最新内容，并在下次启动时恢复。
 
 直接运行 Python 源码时，数据文件保存在 Python 脚本所在目录。卸载程序时不会主动删除用户数据目录，重新安装后仍可继续使用。
 
@@ -171,7 +172,7 @@ python gps_controller_qt.py
 
 - [🛠️ Windows 编译说明](docs/BUILDING.md)
 - [🚀 GitHub 发布说明](docs/GITHUB_PUBLISHING.md)
-- [📝 v1.0.1 版本发布说明](docs/RELEASE_NOTES_v1.0.1.md)
+- [📝 v1.0.0 版本发布说明](docs/RELEASE_NOTES_v1.0.0.md)
 
 ## 🧾 第三方组件
 
