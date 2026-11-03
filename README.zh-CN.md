@@ -72,7 +72,7 @@ MuMu API 提供 `adb.get_connect_info()`，可以查询指定实例编号对应�
 ```python
 from mumu.mumu import Mumu
 
-mumu = Mumu(r"C:\\Program Files\\Netease\\MuMu Player 12\\shell\\MuMuManager.exe")
+mumu = Mumu(r"PATH\TO\MuMuManager.exe")
 print(mumu.select([0, 1, 2, 3]).adb.get_connect_info())
 ```
 
