@@ -14,9 +14,6 @@ The first public release of MuMu GPS Controller for Windows and MuMu Player 6 / 
 - 🔁 Confirmation before manually sending a coordinate already present in location history.
 - 🌐 Simplified Chinese, Traditional Chinese, and English interface.
 - 🎨 Customizable colour themes.
-- 🔎 MuMuManager path discovery and manual path selection.
-- 🪟 Windows installer with selectable installation directory, Start Menu shortcut, optional Desktop shortcut, and uninstall entry.
-- 🫥 Application icon and scoped Windows no-console handling for MuMu API commands.
 
 ### 📥 Installation
 
@@ -44,9 +41,6 @@ This is a community project and is not an official MuMu / NetEase application. R
 - 🔁 再次发送已经存在于定位历史中的手动坐标前，会先询问用户是否继续。
 - 🌐 支持简体中文、繁体中文和英文界面。
 - 🎨 支持预设颜色主题及自定义颜色。
-- 🔎 支持自动查找 MuMuManager 路径和手动选择路径。
-- 🪟 提供 Windows 安装程序，可选择安装目录、创建开始菜单快捷方式、可选桌面快捷方式，并提供卸载入口。
-- 🫥 提供软件图标，并对 MuMu API 命令调用进行限定范围的隐藏 CMD 处理。
 
 ### 📥 安装方式
 
