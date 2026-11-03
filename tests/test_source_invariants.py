@@ -54,7 +54,7 @@ class SourceInvariantTests(unittest.TestCase):
         self.assertIn("record_route = Signal(object)", ast.unparse(worker))
         launch = ast.unparse(find_method(find_class("GPSWindow"), "_launch_route"))
         self.assertIn("worker.record_route.emit(points)", launch)
-        self.assertIn("worker.record_location.emit(end[0], end[1], "路线行走")", launch)
+        self.assertIn('worker.record_location.emit(end[0], end[1], "路线行走")', launch)
 
     def test_shutdown_waits_for_threads_asynchronously(self):
         gps_window = find_class("GPSWindow")
