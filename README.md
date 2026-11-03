@@ -55,41 +55,26 @@ MuMu Player itself is not included in this installer and must be installed separ
 You can add or remove indexes in Settings. For example, configure `1`, `2`, `3`, and `4` to control those four instances together. All configured indexes receive the same GPS update. If an update fails, the application attempts per-index diagnostics and reports which indexes succeeded or failed.
 
 
-### 🔌 Find the instance index with its ADB port
+### 🔌 Find the emulator index in MuMu's ADB Port settings
 
-The **Instance Index** field in this app expects the MuMu Multi-instance Manager index. It does **not** expect the ADB port number.
+The **Instance Index** field in this app expects the number shown before the emulator name in MuMu's ADB Port list. It does **not** expect one of the port numbers.
 
-**Where to view the ADB port in MuMu Player 12:**
+1. Open the MuMu emulator window.
+2. Click the **three-line menu (☰)** in the upper-right corner.
+3. Open **Settings Center**.
+4. Find and expand **ADB Port**.
+5. Find the emulator you want to control. In the list, the number after `#` at the left is its instance index. The values on the right are port information.
 
-1. For the main emulator window, open the menu in the upper-right corner and choose **Troubleshooting / Diagnostics**. Look for **ADB debugging port**.
-2. For a running secondary instance, open **MuMu Multi-instance Manager 12** and click the **ADB** icon on that instance's row to view its ADB port.
-3. Keep the ADB port shown for that instance. To identify the matching index, use the number displayed at the beginning of that emulator's row in Multi-instance Manager. The MuMu API documentation defines this leading number as the instance index used by `select(index)`.
+For example, the screenshot below shows rows similar to:
 
-**Cross-check an index against its ADB port:**
+| ADB Port list row | Instance Index to enter in this app |
+| --- | ---: |
+| `#0  MuMu Android Device  5555,16384` | `0` |
+| `#3  MuMu Android Device 3  5561,16480` | `3` |
 
-The MuMu API can return the ADB connection information for selected indexes:
+**Enter the number after `#` (for example, `3`) in this app. Do not enter the port values (for example, `5561` or `16480`).**
 
-```python
-from mumu.mumu import Mumu
-
-mumu = Mumu(r"PATH\TO\MuMuManager.exe")
-print(mumu.select([0, 1, 2, 3]).adb.get_connect_info())
-```
-
-Example output (the ports below are examples and may differ on your computer):
-
-```python
-{
-    "0": ("127.0.0.1", 16384),
-    "1": ("127.0.0.1", 16416),
-    "2": ("127.0.0.1", 16448),
-    "3": ("127.0.0.1", 16480),
-}
-```
-
-Compare the port shown by MuMu with this result to identify its index. **Enter the matching index (for example, `3`) in this app — do not enter the port (for example, `16480`).** Port allocation can vary by MuMu version and local port availability, so do not rely on a fixed port formula.
-
-For MuMu Player 6, the exact place where the ADB port is displayed can vary by release. Check the emulator's diagnostic/settings page or the Multi-instance Manager. The instance index used by this app is still the index shown by the Multi-instance Manager.
+When controlling multiple emulators, check each row in the ADB Port list and add the corresponding `#` index in this app's Emulator Settings. Port values are connection information; the app uses the instance index to select the emulator.
 
 ## 🧭 Use GPS features
 
