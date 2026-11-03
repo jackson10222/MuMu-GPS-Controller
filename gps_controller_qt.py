@@ -535,6 +535,7 @@ class Worker(QThread):
     status = Signal(str, str)
     progress = Signal(float, float, float, int, int, bool)
     record_location = Signal(float, float, str)
+    save_manual_location = Signal(float, float)
     record_route = Signal(object)
     result = Signal(object)
     failed = Signal(str)
@@ -1695,6 +1696,7 @@ class GPSWindow(QMainWindow):
         worker.status.connect(self._set_status)
         worker.progress.connect(self._update_route_progress)
         worker.record_location.connect(self._record_location)
+        worker.save_manual_location.connect(self._save_manual_location)
         worker.record_route.connect(self._record_route)
         worker.failed.connect(lambda message: self._set_status(f"任务失败：{message}", RED))
         worker.finished.connect(lambda: setattr(self, "mode", None))
@@ -1831,7 +1833,7 @@ class GPSWindow(QMainWindow):
             try:
                 if not self._api_location(lat, lon):
                     raise RuntimeError("MuMu API 返回失败。")
-                self._save_manual_location(lat, lon)
+                worker.save_manual_location.emit(lat, lon)
                 self.current_position = lat, lon
                 worker.record_location.emit(lat, lon, "GPS定位")
                 if not enabled:
