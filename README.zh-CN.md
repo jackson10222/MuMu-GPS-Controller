@@ -19,6 +19,7 @@
 - 🔁 **重复定位确认：** 如果准备再次发送的手动坐标已存在于定位历史，会显示上次记录时间并询问是否继续。
 - 🌐 **三种界面语言：** 简体中文、繁体中文和英文。
 - 🎨 **主题设置：** 使用预设颜色主题，或自定义界面颜色。
+- 💾 **输入内容记忆：** 首次启动时手动坐标和 Route Walk Stops 为空白；输入并保存后，下次打开会恢复上次内容。
 
 ## 🧩 支持环境
 
@@ -115,8 +116,11 @@ MuMu API 的调用顺序是 `androidEvent.location(longitude, latitude)`。**第
 其中可能包含：
 
 - `gps_config.json`：MuMuManager 路径和模拟器实例编号。
-- `gps_locations.json`：收藏地点、定位历史、路线历史，以及输入草稿／缓存。
+- `gps_locations.json`：收藏地点、定位历史、路线历史、手动坐标输入内容，以及 Route Walk 输入草稿。程序会保留有效的上一份 `gps_locations.json.bak`，用于异常时恢复。
+
 - `gps_theme.json`：主题偏好设置。
+
+首次启动且没有已保存输入时，手动 Latitude／Longitude 为空白，Route Walk 默认显示两个空白 Stop。输入坐标或修改 Stops 后，程序会保存最新内容，并在下次启动时恢复。
 
 直接运行 Python 源码时，数据文件保存在 Python 脚本所在目录。卸载程序时不会主动删除用户数据目录，重新安装后仍可继续使用。
 

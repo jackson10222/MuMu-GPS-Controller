@@ -1,0 +1,45 @@
+name: Project validation
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  python-source:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compile Python source
+        run: python -m py_compile gps_controller_qt.py
+
+      - name: Run source regression checks
+        run: python -m unittest discover -s tests -v
+
+      - name: Verify required build assets
+        shell: pwsh
+        run: |
+          $required = @(
+            "assets/gps-location-icon.ico",
+            "assets/gps-location-icon.png",
+            "Languages/ChineseSimplified.isl",
+            "Languages/ChineseTraditional.isl",
+            "MuMu-GPS-Controller-Setup.iss",
+            "build_portable.bat",
+            "build_windows.bat",
+            "build_installer.bat"
+          )
+          $missing = $required | Where-Object { -not (Test-Path $_) }
+          if ($missing) {
+            Write-Error ("Missing required files: " + ($missing -join ", "))
+          }

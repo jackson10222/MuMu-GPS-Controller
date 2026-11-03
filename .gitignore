@@ -17,3 +17,6 @@ portable-legacy/
 build/
 dist/
 *.spec
+*.json.bak
+*.json.tmp
+*.json.corrupt

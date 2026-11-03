@@ -2,9 +2,9 @@
 
 ## 🇬🇧 English
 
-The first public release of MuMu GPS Controller for Windows and MuMu Player 6 / 12.
+The public Windows release of MuMu GPS Controller for MuMu Player 6 and MuMu Player 12.
 
-### ✨ Highlights
+### ✨ Features
 
 - 📍 Manual GPS teleport using coordinates or Google Maps links.
 - 🖥️ Multi-instance GPS updates for configured MuMu emulator indexes.
@@ -14,9 +14,15 @@ The first public release of MuMu GPS Controller for Windows and MuMu Player 6 / 
 - 🔁 Confirmation before manually sending a coordinate already present in location history.
 - 🌐 Simplified Chinese, Traditional Chinese, and English interface.
 - 🎨 Customizable colour themes.
-- 🔎 MuMuManager path discovery and manual path selection.
-- 🪟 Windows installer with selectable installation directory, Start Menu shortcut, optional Desktop shortcut, and uninstall entry.
-- 🫥 Application icon and scoped Windows no-console handling for MuMu API commands.
+- 💾 Manual coordinates and Route Walk drafts are saved and restored on relaunch. A fresh installation starts with empty coordinate fields and two empty Route Walk stops.
+
+### 🛠️ Reliability fixes included
+
+- Route history is saved only after the starting GPS update succeeds.
+- Location history records the route start and each stop only after the corresponding GPS update is accepted; future stops are not pre-recorded.
+- False or empty MuMu API results are treated as failures instead of successful updates.
+- Closing the application requests cancellation and waits for active worker threads to finish before destroying the window.
+- JSON user data is written atomically and a valid previous copy is retained as a backup; a backup can be restored if the primary data file is damaged.
 
 ### 📥 Installation
 
@@ -26,15 +32,15 @@ MuMu Player is not included and must be installed separately.
 
 ### ⚠️ Notes
 
-This is a community project and is not an official MuMu / NetEase application. Runtime compatibility should be verified with the user's installed MuMu Player version and emulator instances.
+This is a community project and is not an official MuMu / NetEase application. Runtime compatibility should be verified with the installed MuMu Player version and emulator instances.
 
 ---
 
 ## 🇨🇳 简体中文
 
-这是 MuMu GPS Controller 面向 Windows 用户发布的第一个公开版本，目标模拟器为 MuMu Player 6 和 MuMu Player 12。
+这是 MuMu GPS Controller 面向 Windows 用户的公开版本，适用于 MuMu Player 6 和 MuMu Player 12。
 
-### ✨ 主要功能
+### ✨ 功能介绍
 
 - 📍 支持输入坐标或粘贴 Google Maps 链接进行 GPS 虚拟定位。
 - 🖥️ 支持同时向多个已配置的 MuMu 模拟器实例发送 GPS 更新。
@@ -44,9 +50,15 @@ This is a community project and is not an official MuMu / NetEase application. R
 - 🔁 再次发送已经存在于定位历史中的手动坐标前，会先询问用户是否继续。
 - 🌐 支持简体中文、繁体中文和英文界面。
 - 🎨 支持预设颜色主题及自定义颜色。
-- 🔎 支持自动查找 MuMuManager 路径和手动选择路径。
-- 🪟 提供 Windows 安装程序，可选择安装目录、创建开始菜单快捷方式、可选桌面快捷方式，并提供卸载入口。
-- 🫥 提供软件图标，并对 MuMu API 命令调用进行限定范围的隐藏 CMD 处理。
+- 💾 手动坐标和 Route Walk 草稿会保存，并在下次启动时恢复。全新安装且没有缓存时，手动坐标为空白，路线显示两个空白 Stop。
+
+### 🛠️ 稳定性修复
+
+- 只有路线起点 GPS 设置成功后，才会保存路线历史。
+- 定位历史只记录成功设置的路线起点和实际到达的 Stop，不再提前把尚未到达的后续地点写入历史。
+- MuMu API 返回 False 或空结果时按失败处理，不再误报定位成功。
+- 关闭软件时会请求停止任务，并等待后台工作线程结束后再销毁窗口。
+- 用户 JSON 数据采用原子写入，并保留有效的上一份备份；主数据文件损坏时可以尝试从备份恢复。
 
 ### 📥 安装方式
 

@@ -19,6 +19,7 @@ A Windows desktop application for controlling GPS locations on **MuMu Player 6 a
 - 🔁 **Duplicate-location confirmation** — before manually sending a coordinate already in location history, see its last recorded time and confirm.
 - 🌐 **Three UI languages** — Simplified Chinese, Traditional Chinese, and English.
 - 🎨 **Themes** — choose a built-in colour theme or customize interface colours.
+- 💾 **Input restoration** — on a first launch, manual coordinates and Route Walk stops start blank; after you save input, the latest values are restored the next time you open the app.
 
 ## 🧩 Supported environment
 
@@ -65,7 +66,7 @@ The **Instance Index** field in this app expects the number shown before the emu
 4. Find and expand **ADB Port**.
 5. Find the emulator you want to control. In the list, the number after `#` at the left is its instance index. The values on the right are port information.
 
-For example, the screenshot below shows rows similar to:
+For example, the ADB Port list may show entries like these (port numbers are examples):
 
 | ADB Port list row | Instance Index to enter in this app |
 | --- | ---: |
@@ -113,8 +114,11 @@ The application stores configuration and user data separately from the installat
 Files may include:
 
 - `gps_config.json` — MuMuManager path and emulator instance indexes.
-- `gps_locations.json` — saved locations, location history, route history, and input caches.
+- `gps_locations.json` — saved locations, location history, route history, manual coordinate input, and the Route Walk draft. A valid previous copy is kept as `gps_locations.json.bak` for recovery.
+
 - `gps_theme.json` — theme preferences.
+
+On a fresh install with no saved input, the manual latitude/longitude fields are empty and Route Walk shows two empty Stop rows. After you enter coordinates or edit Stops, the latest values are saved and restored on the next launch.
 
 When running the source code directly, data files are stored beside the Python script. The installer does not intentionally delete the user data directory during uninstall, so preferences can remain available if the app is installed again.
 
