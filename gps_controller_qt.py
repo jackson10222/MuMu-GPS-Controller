@@ -1340,13 +1340,36 @@ class GPSWindow(QMainWindow):
 
     # ---- saved data ---------------------------------------------------
     def _load_bookmarks(self):
+        if not DATA_FILE.exists():
+            return
         try:
-            if not DATA_FILE.exists():
-                return
-            data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+            try:
+                data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError) as primary_error:
+                backup_file = DATA_FILE.with_suffix(DATA_FILE.suffix + ".bak")
+                try:
+                    data = json.loads(backup_file.read_text(encoding="utf-8"))
+                except (OSError, UnicodeError, json.JSONDecodeError) as backup_error:
+                    # Preserve the damaged file for manual recovery instead of
+                    # silently replacing it with empty defaults.
+                    corrupt_file = DATA_FILE.with_suffix(DATA_FILE.suffix + ".corrupt")
+                    try:
+                        if DATA_FILE.exists() and not corrupt_file.exists():
+                            corrupt_file.write_bytes(DATA_FILE.read_bytes())
+                    except OSError:
+                        pass
+                    self._data_load_error = (
+                        f"主数据文件无法读取：{primary_error}；备份也无法读取：{backup_error}"
+                    )
+                    return
+                self._data_recovered = True
+                # Restore the valid backup while retaining it as the recovery copy.
+                save_json_atomically(DATA_FILE, data, keep_backup=False)
+
             if isinstance(data, list):
                 data = {"bookmarks": data}
             if not isinstance(data, dict):
+                self._data_load_error = "定位数据文件格式不正确。"
                 return
 
             bookmarks = data.get("bookmarks", [])
@@ -1368,12 +1391,21 @@ class GPSWindow(QMainWindow):
                 x for x in routes if isinstance(x, dict) and isinstance(x.get("points"), list)
             ][-30:] if isinstance(routes, list) else []
 
-            # Last manual location is a single replaceable cache, never a list.
+            # Restore the visible manual input draft, including partially
+            # entered values. Older files fall back to the last successful fix.
+            manual_inputs = data.get("manual_input")
+            if isinstance(manual_inputs, dict):
+                self.manual_input_cache = {
+                    "lat": str(manual_inputs.get("lat", "")),
+                    "lon": str(manual_inputs.get("lon", "")),
+                }
             manual = data.get("last_manual_location")
             if isinstance(manual, dict):
                 lat, lon = manual.get("lat"), manual.get("lon")
                 if isinstance(lat, (int, float)) and isinstance(lon, (int, float)) and valid_coordinates(float(lat), float(lon)):
                     self.last_manual_location = (float(lat), float(lon))
+                    if not isinstance(manual_inputs, dict):
+                        self.manual_input_cache = {"lat": str(lat), "lon": str(lon)}
 
             # Preserve every Route Walk input row, including empty rows, so both
             # the entered values and the number of stops survive a restart.
@@ -1389,10 +1421,8 @@ class GPSWindow(QMainWindow):
                 if len(stops) < stop_count:
                     stops.extend([""] * (stop_count - len(stops)))
                 self.route_draft = stops
-        except Exception:
-            self.bookmarks, self.location_history, self.route_history = [], [], []
-            self.last_manual_location, self.route_draft = None, None
-
+        except Exception as exc:
+            self._data_load_error = f"定位数据读取时发生错误：{type(exc).__name__}: {exc}"
     def _save_bookmarks(self):
         route_stops = [row["entry"].text() for row in getattr(self, "route_rows", [])]
         manual = None
