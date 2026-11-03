@@ -25,7 +25,7 @@ if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         os.add_dll_directory(str(_bundle_dir / "PySide6"))
 
 import requests
-from PySide6.QtCore import QObject, QRect, Qt, QThread, Signal
+from PySide6.QtCore import QObject, QRect, Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QIntValidator, QPainter, QPen
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QColorDialog, QDialog, QFileDialog, QFrame, QGridLayout,
@@ -105,9 +105,6 @@ def _install_mumu_no_console_patch():
 
 
 MUMU_NO_CONSOLE_PATCH_INSTALLED = _install_mumu_no_console_patch()
-
-
-_install_mumu_no_console_patch()
 
 APP_TITLE = "MuMu GPS Controller"
 
@@ -434,8 +431,8 @@ class MumuBackend:
         """Sequential diagnostic fallback for a single emulator index."""
         manager = self.selected_instance(instance_index)
         result = manager.androidEvent.location(lon, lat)  # API order: longitude, latitude.
-        if result is False:
-            raise RuntimeError("MuMu API returned False; location was not confirmed.")
+        if not result:
+            raise RuntimeError(f"MuMu API did not confirm location for instance {instance_index} (returned {result!r}).")
         return instance_index
 
     def broadcast_location(self, lat: float, lon: float) -> list[str]:
@@ -456,9 +453,9 @@ class MumuBackend:
         try:
             client = Mumu(path).select([int(index) for index in indices])
             result = client.androidEvent.location(lon, lat)  # API order: longitude, latitude.
-            if result is not False:
+            if result:
                 return indices
-            batch_error = "批量定位调用返回 False"
+            batch_error = f"批量定位调用未确认成功（返回 {result!r}）"
         except Exception as exc:
             batch_error = self._format_api_error(exc)
 
@@ -538,6 +535,7 @@ class Worker(QThread):
     status = Signal(str, str)
     progress = Signal(float, float, float, int, int, bool)
     record_location = Signal(float, float, str)
+    record_route = Signal(object)
     result = Signal(object)
     failed = Signal(str)
 
@@ -576,6 +574,8 @@ class GPSWindow(QMainWindow):
         self.route_progress_value, self.current_position, self.mode = 0.0, None, None
         self._route_progress_state = None
         self.worker = None
+        self._closing_requested = False
+        self._close_ready = False
         self.stop_event, self.pause_event = threading.Event(), threading.Event()
         self.pause_event.set()
         self._status_source_text, self._status_color = "待机 · 输入坐标后即可设置虚拟定位。", MUTED
@@ -1098,11 +1098,11 @@ class GPSWindow(QMainWindow):
 
         coords = self._section(self.gps_layout, "手动坐标")
         coords.addWidget(self._label("纬度 Latitude", 10, MUTED))
-        last_lat, last_lon = self.last_manual_location or (35.6812, 139.7671)
-        self.lat_entry = self._entry(value=str(last_lat))
+        last_lat, last_lon = self.last_manual_location or (None, None)
+        self.lat_entry = self._entry(value="" if last_lat is None else str(last_lat))
         coords.addWidget(self.lat_entry)
         coords.addWidget(self._label("经度 Longitude", 10, MUTED))
-        self.lon_entry = self._entry(value=str(last_lon))
+        self.lon_entry = self._entry(value="" if last_lon is None else str(last_lon))
         coords.addWidget(self.lon_entry)
 
         walk = self._section(self.gps_layout, "传送后原地随机走动", "可选功能：在目标附近移动一段时间，然后返回起点。")
@@ -1161,9 +1161,9 @@ class GPSWindow(QMainWindow):
         self.route_points_layout = QVBoxLayout()
         self.route_points_layout.setSpacing(5)
         stops.addLayout(self.route_points_layout)
-        initial_stops = self.route_draft or [
-            "35.6812,139.7671", "35.6820,139.7680", "35.6830,139.7690"
-        ]
+        # First launch: no draft exists, so show two empty rows. Once the user
+        # has entered Stops, the JSON draft is restored on the next launch.
+        initial_stops = self.route_draft if self.route_draft is not None else ["", ""]
         self._restoring_route_draft = True
         try:
             for value in initial_stops:
@@ -1400,14 +1400,13 @@ class GPSWindow(QMainWindow):
             print(f"Could not save location history: {exc}")
 
     def _record_route(self, points):
+        """Store the route itself without pretending every stop was visited."""
         clean = [{"lat": float(lat), "lon": float(lon)} for lat, lon in points if valid_coordinates(float(lat), float(lon))]
         if len(clean) < 2:
             return
         with self.history_lock:
             self.route_history = (self.route_history + [{"time": datetime.now().astimezone().isoformat(timespec="seconds"), "points": clean}])[-30:]
             self._save_bookmarks()
-        for point in clean:
-            self._record_location(point["lat"], point["lon"], "路线行走")
 
     # ---- history and bookmark UI -------------------------------------
     def _refresh_location_history(self):
@@ -1683,6 +1682,8 @@ class GPSWindow(QMainWindow):
         self.status_dot.setStyleSheet(f"color:{color};")
 
     def _start_worker(self, mode, work):
+        if self._closing_requested:
+            return False
         if self.worker and self.worker.isRunning():
             QMessageBox.warning(self, self._t("正在运行"), self._t("请先停止当前任务。"))
             return False
@@ -1694,16 +1695,22 @@ class GPSWindow(QMainWindow):
         worker.status.connect(self._set_status)
         worker.progress.connect(self._update_route_progress)
         worker.record_location.connect(self._record_location)
+        worker.record_route.connect(self._record_route)
         worker.failed.connect(lambda message: self._set_status(f"任务失败：{message}", RED))
         worker.finished.connect(lambda: setattr(self, "mode", None))
         worker.start()
         return True
 
     def _start_background(self, work, success, failure_title):
+        if self._closing_requested:
+            return None
         worker = Worker(work, self)
         self.background_workers.append(worker)
         worker.result.connect(success)
-        worker.failed.connect(lambda message: QMessageBox.critical(self, self._t(failure_title), self._t(message)))
+        def show_background_failure(message):
+            if not self._closing_requested:
+                QMessageBox.critical(self, self._t(failure_title), self._t(message))
+        worker.failed.connect(show_background_failure)
         worker.finished.connect(lambda: self.background_workers.remove(worker) if worker in self.background_workers else None)
         worker.start()
 
@@ -1817,13 +1824,14 @@ class GPSWindow(QMainWindow):
         # before sending it again. Choosing No leaves cache/history untouched.
         if not self._confirm_repeated_location(lat, lon):
             return
-        # One cache entry only: a new manual GPS pair replaces the previous pair.
-        self._save_manual_location(lat, lon)
+        # Cache the last manual coordinate only after MuMu confirms success.
+        # A failed API call must not become the restored "last location".
         self._set_status("正在设置虚拟定位……", BLUE)
         def work(worker):
             try:
                 if not self._api_location(lat, lon):
                     raise RuntimeError("MuMu API 返回失败。")
+                self._save_manual_location(lat, lon)
                 self.current_position = lat, lon
                 worker.record_location.emit(lat, lon, "GPS定位")
                 if not enabled:
@@ -1901,6 +1909,8 @@ class GPSWindow(QMainWindow):
         except ValueError as exc:
             QMessageBox.critical(self, self._t("输入错误"), self._t(str(exc)))
             return
+        if self._closing_requested:
+            return
         if self.worker and self.worker.isRunning():
             QMessageBox.warning(self, self._t("正在运行"), self._t("请先停止当前任务。"))
             return
@@ -1914,9 +1924,8 @@ class GPSWindow(QMainWindow):
         self._start_background(lambda _: self._parse_route_lines(lines), lambda points: self._launch_route(points, speed, interval), "路线错误")
 
     def _launch_route(self, points, speed, interval):
-        if self.worker and self.worker.isRunning():
+        if self._closing_requested or (self.worker and self.worker.isRunning()):
             return
-        self._record_route(points)
         self.progress.setValue(0)
         self.route_progress_value = 0
         self._update_route_progress_display(len(points))
@@ -1926,6 +1935,8 @@ class GPSWindow(QMainWindow):
                 if not self._api_location(*points[0]):
                     raise RuntimeError("MuMu 未接受路线起点。")
                 self.current_position = points[0]
+                worker.record_route.emit(points)
+                worker.record_location.emit(points[0][0], points[0][1], "路线行走")
                 worker.status.emit(f"路线行走开始 · {len(points)} 个路线点", GREEN)
                 for index, (start, end) in enumerate(zip(points, points[1:])):
                     distance = haversine_m(start, end)
@@ -1940,6 +1951,10 @@ class GPSWindow(QMainWindow):
                         if not self._api_location(*position):
                             raise RuntimeError("MuMu API 返回失败，路线移动停止。")
                         self.current_position = position
+                        if step == steps:
+                            # Record only a route stop after its location update
+                            # was accepted; never pre-log future/unreached stops.
+                            worker.record_location.emit(end[0], end[1], "路线行走")
                         done = travelled + distance * step / steps
                         pct = 1 if total <= 0 else min(1, done / total)
                         worker.progress.emit(pct, done, total, index, len(points) - 1, False)
@@ -2010,14 +2025,36 @@ class GPSWindow(QMainWindow):
         self.pause_event.set()
         self._set_status("正在停止任务……", ORANGE)
 
+    def _poll_workers_before_close(self):
+        """Close only after every QThread has actually finished."""
+        workers = []
+        if self.worker is not None:
+            workers.append(self.worker)
+        workers.extend(self.background_workers)
+        # Keep object identity unique when a worker is referenced in two places.
+        unique_workers = {id(worker): worker for worker in workers}.values()
+        if any(worker.isRunning() for worker in unique_workers):
+            QTimer.singleShot(100, self._poll_workers_before_close)
+            return
+        self._close_ready = True
+        self.close()
+
     def closeEvent(self, event):  # noqa: N802
+        if self._close_ready:
+            event.accept()
+            return
+        event.ignore()
+        if self._closing_requested:
+            return
+        self._closing_requested = True
         self.stop_event.set()
         self.pause_event.set()
         try:
             self._save_route_draft()
         except OSError as exc:
             print(f"Could not save route draft: {exc}")
-        event.accept()
+        self._set_status("正在停止任务并等待后台操作结束……", ORANGE)
+        QTimer.singleShot(100, self._poll_workers_before_close)
 
 
 if __name__ == "__main__":
