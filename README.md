@@ -19,9 +19,6 @@ A Windows desktop application for controlling GPS locations on **MuMu Player 6 a
 - 🔁 **Duplicate-location confirmation** — before manually sending a coordinate already in location history, see its last recorded time and confirm.
 - 🌐 **Three UI languages** — Simplified Chinese, Traditional Chinese, and English.
 - 🎨 **Themes** — choose a built-in colour theme or customize interface colours.
-- 🔎 **Manager-path discovery** — check common MuMu installation folders without scanning the entire disk; manual browsing is available.
-- 🪟 **Windows integration** — application/taskbar icon, installer, Start Menu shortcut, optional Desktop shortcut, and uninstaller.
-- 🫥 **Reduced console flashing** — apply a scoped Windows no-console launch patch to the MuMu API command runner when supported by the installed API layout.
 
 ## 🧩 Supported environment
 
@@ -56,6 +53,43 @@ MuMu Player itself is not included in this installer and must be installed separ
 6. Use **Test Connection** to check that the API can select the configured indexes. This test does not prove that every emulator is currently running.
 
 You can add or remove indexes in Settings. For example, configure `1`, `2`, `3`, and `4` to control those four instances together. All configured indexes receive the same GPS update. If an update fails, the application attempts per-index diagnostics and reports which indexes succeeded or failed.
+
+
+### 🔌 Find the instance index with its ADB port
+
+The **Instance Index** field in this app expects the MuMu Multi-instance Manager index. It does **not** expect the ADB port number.
+
+**Where to view the ADB port in MuMu Player 12:**
+
+1. For the main emulator window, open the menu in the upper-right corner and choose **Troubleshooting / Diagnostics**. Look for **ADB debugging port**.
+2. For a running secondary instance, open **MuMu Multi-instance Manager 12** and click the **ADB** icon on that instance's row to view its ADB port.
+3. Keep the ADB port shown for that instance. To identify the matching index, use the number displayed at the beginning of that emulator's row in Multi-instance Manager. The MuMu API documentation defines this leading number as the instance index used by `select(index)`.
+
+**Cross-check an index against its ADB port:**
+
+The MuMu API can return the ADB connection information for selected indexes:
+
+```python
+from mumu.mumu import Mumu
+
+mumu = Mumu(r"C:\\Program Files\\Netease\\MuMu Player 12\\shell\\MuMuManager.exe")
+print(mumu.select([0, 1, 2, 3]).adb.get_connect_info())
+```
+
+Example output (the ports below are examples and may differ on your computer):
+
+```python
+{
+    "0": ("127.0.0.1", 16384),
+    "1": ("127.0.0.1", 16416),
+    "2": ("127.0.0.1", 16448),
+    "3": ("127.0.0.1", 16480),
+}
+```
+
+Compare the port shown by MuMu with this result to identify its index. **Enter the matching index (for example, `3`) in this app — do not enter the port (for example, `16480`).** Port allocation can vary by MuMu version and local port availability, so do not rely on a fixed port formula.
+
+For MuMu Player 6, the exact place where the ADB port is displayed can vary by release. Check the emulator's diagnostic/settings page or the Multi-instance Manager. The instance index used by this app is still the index shown by the Multi-instance Manager.
 
 ## 🧭 Use GPS features
 
@@ -141,7 +175,6 @@ The Chinese installer message files are bundled in `Languages/`; the build does 
 | Test Connection fails for an index | Check the index shown in MuMu Multi-instance Manager and verify the manager path. Start the intended emulator instance. |
 | One or more instances fail GPS updates | Check each reported index. Successful API selection does not guarantee that the emulator is running or accepting location updates. |
 | GPS does not move | Confirm MuMu Player is running, the selected instance is correct, and the MuMu API can communicate with the manager. |
-| A CMD window flashes | The app applies a scoped no-console patch to the MuMu API command runner. If it still flashes, report the MuMu Player version, API version, and steps that trigger it. |
 | The application does not start | Run the packaged app from its complete Portable folder, or reinstall using the Setup program. Do not copy only the Portable EXE away from its `_internal` folder. |
 
 ## 📚 Documentation
