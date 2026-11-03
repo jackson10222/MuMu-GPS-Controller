@@ -1,5 +1,5 @@
 #define MyAppName "MuMu GPS Controller"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "MuMu GPS Controller"
 #define MyAppExeName "MuMu-GPS-Controller-Portable.exe"
 
@@ -26,7 +26,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 DisableDirPage=no
 SetupLogging=yes
 Uninstallable=yes
-VersionInfoVersion=1.0.0.0
+VersionInfoVersion=1.0.1.0
 VersionInfoProductName={#MyAppName}
 VersionInfoDescription=MuMu Android emulator GPS controller
 
