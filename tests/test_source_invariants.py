@@ -51,7 +51,7 @@ class SourceInvariantTests(unittest.TestCase):
 
     def test_route_worker_records_only_successful_emitted_stops(self):
         worker = find_class("Worker")
-        self.assertIn("record_route", {n.targets[0].id for n in worker.body if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)})
+        self.assertIn("record_route = Signal(object)", ast.unparse(worker))
         launch = ast.unparse(find_method(find_class("GPSWindow"), "_launch_route"))
         self.assertIn("worker.record_route.emit(points)", launch)
         self.assertIn("worker.record_location.emit(end[0], end[1], "路线行走")", launch)
