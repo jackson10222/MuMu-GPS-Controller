@@ -38,7 +38,21 @@ class SourceInvariantTests(unittest.TestCase):
         gps_tab = find_method(find_class("GPSWindow"), "_build_gps_tab")
         self.assertNotIn("35.6812", ast.unparse(gps_tab))
         self.assertNotIn("139.7671", ast.unparse(gps_tab))
-        self.assertIn("self.last_manual_location", ast.unparse(gps_tab))
+        self.assertIn("self.manual_input_cache", ast.unparse(gps_tab))
+
+    def test_manual_coordinate_text_is_cached_as_edited(self):
+        gps_window = find_class("GPSWindow")
+        gps_tab = ast.unparse(find_method(gps_window, "_build_gps_tab"))
+        cache_method = ast.unparse(find_method(gps_window, "_save_manual_inputs"))
+        self.assertIn("textChanged.connect(self._save_manual_inputs)", gps_tab)
+        self.assertIn("self._save_bookmarks()", cache_method)
+
+    def test_json_saves_are_atomic_and_keep_a_backup(self):
+        helper = ast.unparse(next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "save_json_atomically"))
+        saver = ast.unparse(find_method(find_class("GPSWindow"), "_save_bookmarks"))
+        self.assertIn("os.replace", helper)
+        self.assertIn(".bak", helper)
+        self.assertIn("save_json_atomically(DATA_FILE, data)", saver)
 
     def test_first_run_route_has_two_empty_rows(self):
         route_tab = ast.unparse(find_method(find_class("GPSWindow"), "_build_route_tab"))
