@@ -116,7 +116,7 @@ MuMu API 的调用顺序是 `androidEvent.location(longitude, latitude)`。**第
 其中可能包含：
 
 - `gps_config.json`：MuMuManager 路径和模拟器实例编号。
-- `gps_locations.json`：收藏地点、定位历史、路线历史、最近一次成功设置的手动坐标，以及 Route Walk 输入草稿。
+- `gps_locations.json`：收藏地点、定位历史、路线历史、手动坐标输入内容，以及 Route Walk 输入草稿。程序会保留有效的上一份 `gps_locations.json.bak`，用于异常时恢复。
 
 - `gps_theme.json`：主题偏好设置。
 
