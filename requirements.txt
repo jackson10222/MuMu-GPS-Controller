@@ -1,0 +1,4 @@
+PySide6==6.12.0
+requests
+mumu-python-api-wlkjyy
+opencc-python-reimplemented
