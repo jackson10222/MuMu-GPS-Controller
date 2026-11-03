@@ -59,6 +59,21 @@ class SourceInvariantTests(unittest.TestCase):
         self.assertIn("else ['', '']", route_tab)
         self.assertNotIn("35.6812,139.7671", route_tab)
 
+    def test_saved_manual_and_route_drafts_are_loaded_on_relaunch(self):
+        loader = ast.unparse(find_method(find_class("GPSWindow"), "_load_bookmarks"))
+        gps_tab = ast.unparse(find_method(find_class("GPSWindow"), "_build_gps_tab"))
+        route_tab = ast.unparse(find_method(find_class("GPSWindow"), "_build_route_tab"))
+        self.assertIn("manual_input", loader)
+        self.assertIn("route_draft", loader)
+        self.assertIn("manual_input_cache", gps_tab)
+        self.assertIn("self.route_draft", route_tab)
+
+    def test_corrupt_or_missing_data_can_be_restored_from_backup(self):
+        loader = ast.unparse(find_method(find_class("GPSWindow"), "_load_bookmarks"))
+        self.assertIn(".bak", loader)
+        self.assertIn("save_json_atomically", loader)
+        self.assertIn(".corrupt", loader)
+
     def test_route_history_does_not_mark_all_stops_as_visited(self):
         record_route = find_method(find_class("GPSWindow"), "_record_route")
         self.assertNotIn("_record_location", called_attributes(record_route))
