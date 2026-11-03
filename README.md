@@ -114,7 +114,7 @@ The application stores configuration and user data separately from the installat
 Files may include:
 
 - `gps_config.json` — MuMuManager path and emulator instance indexes.
-- `gps_locations.json` — saved locations, location history, route history, the last successfully applied manual coordinate, and the Route Walk draft.
+- `gps_locations.json` — saved locations, location history, route history, manual coordinate input, and the Route Walk draft. A valid previous copy is kept as `gps_locations.json.bak` for recovery.
 
 - `gps_theme.json` — theme preferences.
 
