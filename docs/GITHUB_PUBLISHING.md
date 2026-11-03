@@ -34,10 +34,10 @@
 
 1. 打开 Repository 的 **Releases** 页面。
 2. 点击 **Draft a new release**。
-3. Tag 建议使用 `v1.0.0`。
-4. Release title：`MuMu GPS Controller v1.0.0`。
+3. Tag 建议使用 `v1.0.1`。
+4. Release title：`MuMu GPS Controller v1.0.1`。
 5. 将 `dist/installer/MuMu-GPS-Controller-Setup.exe` 拖到附件区域。
-6. 从 `docs/RELEASE_NOTES_v1.0.0.md` 复制中英文发布说明。
+6. 从 `docs/RELEASE_NOTES_v1.0.1.md` 复制中英文发布说明。
 7. 点击 **Publish release**。
 
 普通用户只需要下载 `MuMu-GPS-Controller-Setup.exe`。Portable 文件夹版如果也要提供，需要先把整个 `dist/MuMu-GPS-Controller-Portable/` 文件夹压缩成 ZIP，再作为另一个 Release 附件上传。
@@ -80,9 +80,9 @@ Upload source code, documentation, assets, and build scripts, including the Pyth
 
 1. Open the repository's **Releases** page.
 2. Select **Draft a new release**.
-3. Use tag `v1.0.0` and title `MuMu GPS Controller v1.0.0`.
+3. Use tag `v1.0.1` and title `MuMu GPS Controller v1.0.1`.
 4. Attach `dist/installer/MuMu-GPS-Controller-Setup.exe`.
-5. Copy the bilingual notes from `docs/RELEASE_NOTES_v1.0.0.md`.
+5. Copy the bilingual notes from `docs/RELEASE_NOTES_v1.0.1.md`.
 6. Publish the release.
 
 For a Portable download, ZIP the entire `dist/MuMu-GPS-Controller-Portable/` folder and attach that ZIP as a separate asset.
